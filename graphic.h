@@ -13,11 +13,15 @@
 typedef struct {
     WINDOW *win;
     map_t *map;
+    int pos_x;
+    int pos_y;
 } area_t;
 
-area_t *winget(int h, int w);
 void wininit();
+area_t *winget(int h, int w);
+area_t *winmaze(int h, int w);
 int winupdate(area_t *area);
+void winmov(area_t *area, char dir);
 void winplayer(area_t *area, int y, int x);
 void windel(area_t *area);
 

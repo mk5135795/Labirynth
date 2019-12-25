@@ -1,4 +1,3 @@
-
 #include "network.h"
 
 net_t *getnett()

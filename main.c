@@ -1,52 +1,52 @@
-#define _XOPEN_SOURCE_EXTENDED 
+#define _XOPEN_SOURCE //usleep
 
 #include <stdio.h>
-#include <wchar.h>
-#include <locale.h>
-#include <ncursesw/ncurses.h>
-#include "map.h"
-#include "maze.h"
+#include <unistd.h>
+#include <stdlib.h>
 #include "graphic.h"
 
-void print(map_t *mp)
+void movlen(area_t *area, char dir)
 {
-    for(int j=0; j<mp->h; j++)
-    {
-        wprintf(L"%ls\n", mp->data[j]);
-    }
-    mapfree(&mp);
+  for(int i=rand()%50+20; i>=0; i--)
+  {
+    usleep(25000);
+    winmov(area, dir);
+  }
+}
+
+char rnddir()
+{
+  switch( rand()%4 )
+  {
+  case 0:
+    return 'w';
+  case 1:
+    return 's';
+  case 2:
+    return 'a';
+  case 3:
+    return 'd';
+  default:
+    return ' ';
+  }
 }
 
 int main(int argc, char *argv[])
 {
-    int sc_y = 3;
-    int sc_x = 3;
-    int h = 43;
-    int w = 132;
-    int mode=2;
-    setlocale(LC_ALL, "");
-    if(mode == 2)
-    {
-        wininit();
-        area_t *area = winget(h, w);
-        winupdate(area);
-        sleep(2);
-        windel(area);
-        return 0;
-    }
-    else if(mode ==1)
-    {
-//      printf("aaa\n");
-//      print(mapgetf(area_map, 0, 0, h, w));
-//      mapfree(&area_map);
-    }
-    //map_t *area_map = mapcfill(h*sc_y, w*sc_x, L'█', 0);
-    map_t *area_map = mapcfill(h, w, L'█', 0);
-    //rwalk3(area_map);
-    genmaze(area_map);
-    map_t *tmp = mapscale(area_map, sc_y, sc_x);
-    mapfree(&area_map);
-    area_map = tmp;
-//  set();
-    return 0;
+  int w = 60;
+  int h = 21;
+  wininit();
+  
+  area_t *area;
+  ERPTEST(area = winmaze(h, w), -1);
+  winupdate(area);
+
+  for(int i=0; i<20; i++)
+  {
+    movlen(area, rnddir());
+  }
+  usleep(1000000);
+  
+  windel(area);
+  return 0;
 }

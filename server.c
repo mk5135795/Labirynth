@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE_EXTENDED 
-
 #define PORT 55555
 #define SAFE(v) \
   if((v) < 0) \
@@ -19,7 +17,10 @@ int main(int argc, char* argv[])
   ERTEST(server_i = creatsfd(net, NULL), -1);
   ERTEST(acceptsfd(net, server_i), -1);
   printf("accept\n");
-  sleep(5);
+  sleep(1);
+  ERTEST(selectfd(net, 0), -1);
+  printf("select\n");
+  ERTEST(closesfd(net, 1), -1);
   printf("end\n");
   delnett(&net);
   return 0;

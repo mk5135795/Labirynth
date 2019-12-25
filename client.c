@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE_EXTENDED 
-
 #define PORT 55555
 #define SAFE(v) \
   if((v) < 0) \
@@ -18,6 +16,7 @@ int main(int argc, char* argv[])
   ERTEST(creatsfd(net, "0.0.0.0"), -1);
   printf("accept\n");
   sleep(1);
+  ERTEST(sendfmsg(net->fd[0], "test"), -1);
   printf("end\n");
   delnett(&net);
   return 0;

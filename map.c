@@ -94,18 +94,25 @@ int mapsetf(map_t *mp, map_t *frag, int pos_y, int pos_x)
 {
     if((frag->w <= 0) || (frag->h <= 0) 
             || (mp->w <= 0) || (mp->h <= 0) 
-            || (pos_x + frag->w > mp->w) 
-            || (pos_y + frag->h > mp->h))
+            || (frag->w > mp->w) 
+            || (frag->h > mp->h))
     {
         mapfree(&frag);
         return -1;
     }
 
-    for(int j=frag->h-1; j >=0; j--)
+//  for(int j=frag->h-1; j >=0; j--)
+//  {
+//      for(int i=frag->w-1; i>=0; i--)
+//      {
+//          mp->data[pos_y+j][pos_x+i] = frag->data[j][i];
+//      }
+//  }
+    for(int j=frag->h-1; j>=0; j--)
     {
         for(int i=frag->w-1; i>=0; i--)
         {
-            mp->data[pos_y+j][pos_x+i] = frag->data[j][i];
+            mp->data[(pos_y+j)%mp->h][(pos_x+i)%mp->w] = frag->data[j][i];
         }
     }
     mapfree(&frag);
@@ -167,8 +174,21 @@ void mapprint(map_t *map)
 {
     for(int j=0; j<map->h; j++)
     {
-        wprintf(L"%ls\n", map->data[j]);
+      for(int i=0; i<map->w; i++)
+      {
+        if(map->data[j][i] == L' ')
+        {
+          wprintf(L"-");
+        }
+        else
+        {
+          wprintf(L"#");
+        }
+        //wprintf(L"%lc", map->data[j][i]);
+      }
+      wprintf(L"\n");
     }
+    wprintf(L"\n");
 }
 
 wchar_t *mapserialize(map_t *map)

@@ -21,6 +21,7 @@ void wininit();
 area_t *winget(int h, int w);
 area_t *winmaze(int h, int w);
 void winupdate(area_t *area);
+map_t *wingetfrag(char dir, map_t *map, int pos_y, int pos_x, int h, int w);
 int  winmov(area_t *area, char dir, map_t *map);
 void winplayer(area_t *area, int y, int x);
 void windel(area_t *area);

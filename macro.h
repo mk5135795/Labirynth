@@ -13,14 +13,14 @@
     {\
         printf("error - line %d in %s\n", __LINE__, __FILE__);\
         perror("\treason: ");\
-        return ret; \
+        return ret;\
     }
 #define ERPTEST(val, ret)\
     if((val) == NULL)\
     {\
         printf("error - line %d in %s\n", __LINE__, __FILE__);\
         perror("\treason: ");\
-        return ret; \
+        return ret;\
     }
 
 #endif /*MACRO_H*/

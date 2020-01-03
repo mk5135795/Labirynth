@@ -73,43 +73,44 @@ void winupdate(area_t *area)
   wrefresh(area->win);
 }
 
-map_t *wingetfrag(char dir, map_t *map, int pos_y, int pos_x, int h, int w)
+map_t *wingetfrag(char dir, map_t *map, int *pos_y, int *pos_x, int h, int w)
 {
   map_t *frag = NULL;
-  if((pos_y < 1) || (pos_y + h >= map->h) 
-  || (pos_x < 1) || (pos_x + w >= map->w))
+  if(((*pos_y) < 0) || ((*pos_y) + h > map->h) 
+  || ((*pos_x) < 0) || ((*pos_x) + w > map->w))
   {
+//  wprintf(L"%d %d\t%d>=%d\t%d>=%d\n", *pos_y, *pos_x, (*pos_y)+h, map->h, (*pos_x)+w, map->w);
     return NULL;
   }
 
   switch(dir)
   {
   case 'w':
-    if((frag = mapgetf(map, --pos_y, pos_x, 1, w)) == NULL)
+    if((frag = mapgetf(map, --(*pos_y), (*pos_x), 1, w)) == NULL)
     {
-      pos_y++;
+      (*pos_y)++;
     }
     break;
   case 's':
-    if((frag = mapgetf(map, h + pos_y++, pos_x, 1, w)) == NULL)
+    if((frag = mapgetf(map, h + (*pos_y)++, (*pos_x), 1, w)) == NULL)
     {
-      pos_y--;
+      (*pos_y)--;
     }
     break;
   case 'a':
-    if((frag = mapgetf(map, pos_y, --pos_x, h, 1)) == NULL)
+    if((frag = mapgetf(map, (*pos_y), --(*pos_x), h, 1)) == NULL)
     {
-      pos_x++;
+      (*pos_x)++;
     }
     break;
   case 'd':
-    if((frag = mapgetf(map, pos_y, w + pos_x++, h, 1)) == NULL)
+    if((frag = mapgetf(map, (*pos_y), w + (*pos_x)++, h, 1)) == NULL)
     {
-      pos_x--;
+      (*pos_x)--;
     }
     break;
   case 'c':
-    frag = mapgetf(map, pos_y, pos_x, h, w);
+    frag = mapgetf(map, (*pos_y), (*pos_x), h, w);
     break;
   }
   return frag;

@@ -20,13 +20,13 @@ int main(int argc, char *argv[])
   
   if(argc == 1)
   {
-    ERTEST(winmov(area, 'c', getf('c', g_h/2, g_w/2)), -1);
+    ERTEST(winmov(area, 'c', wingetfrag('c', g_area->map, &p_y, &p_x, g_h/2, g_w/2)), -1);
 
     char dir;
     map_t *frag;
     while((dir = wgetch(area->win)) != 'q')    
     {
-      if((frag = getf(dir, g_h/2, g_w/2)) != NULL)
+      if((frag = wingetfrag(dir, g_area->map, &p_y, &p_x, g_h/2, g_w/2)) != NULL)
       {
         RTEST(winmov(area, dir, frag), -1);
       }

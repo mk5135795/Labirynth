@@ -85,21 +85,21 @@ map_t *mapcscale(map_t *map, int scale_y, int scale_x)
     return n_map;
 }
 
-int mapscale(map_t *map, int scale_y, int scale_x)
+int mapscale(map_t **map, int scale_y, int scale_x)
 {
     map_t *n_map;
-    RPTEST(n_map = mapcreat(map->h*scale_y, map->w*scale_x), -1);
+    RPTEST(n_map = mapcreat((*map)->h*scale_y, (*map)->w*scale_x), -1);
 
     for(int y=n_map->h-1; y>=0; y--)
     {
         for(int x=n_map->w-1; x>=0; x--)
         {
-            n_map->data[y][x] = map->data[y/scale_y][x/scale_x];
+            n_map->data[y][x] = (*map)->data[y/scale_y][x/scale_x];
         }
     }
 
-    mapfree(&map);
-    map = n_map;
+    mapfree(map);
+    (*map) = n_map;
     return 0;
 }
 

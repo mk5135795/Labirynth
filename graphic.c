@@ -73,44 +73,43 @@ void winupdate(area_t *area)
   wrefresh(area->win);
 }
 
-map_t *wingetfrag(char dir, map_t *map, int *pos_y, int *pos_x, int h, int w)
+map_t *wingetfrag(char dir, map_t *map, point_t *pos, point_t size)
 {
   map_t *frag = NULL;
-  if(((*pos_y) < 0) || ((*pos_y) + h > map->h) 
-  || ((*pos_x) < 0) || ((*pos_x) + w > map->w))
+  if(((pos->y) < 0) || ((pos->y) + size.y > map->h) 
+  || ((pos->x) < 0) || ((pos->x) + size.x > map->w))
   {
-//  wprintf(L"%d %d\t%d>=%d\t%d>=%d\n", *pos_y, *pos_x, (*pos_y)+h, map->h, (*pos_x)+w, map->w);
     return NULL;
   }
 
   switch(dir)
   {
   case 'w':
-    if((frag = mapgetf(map, --(*pos_y), (*pos_x), 1, w)) == NULL)
+    if((frag = mapgetf(map, --(pos->y), (pos->x), 1, size.x)) == NULL)
     {
-      (*pos_y)++;
-    }
-    break;
-  case 's':
-    if((frag = mapgetf(map, h + (*pos_y)++, (*pos_x), 1, w)) == NULL)
-    {
-      (*pos_y)--;
+      (pos->y)++;
     }
     break;
   case 'a':
-    if((frag = mapgetf(map, (*pos_y), --(*pos_x), h, 1)) == NULL)
+    if((frag = mapgetf(map, (pos->y), --(pos->x), size.y , 1)) == NULL)
     {
-      (*pos_x)++;
+      (pos->x)++;
+    }
+    break;
+  case 's':
+    if((frag = mapgetf(map, size.y + (pos->y)++, (pos->x), 1, size.x)) == NULL)
+    {
+      (pos->y)--;
     }
     break;
   case 'd':
-    if((frag = mapgetf(map, (*pos_y), w + (*pos_x)++, h, 1)) == NULL)
+    if((frag = mapgetf(map, (pos->y), size.x + (pos->x)++, size.y , 1)) == NULL)
     {
-      (*pos_x)--;
+      (pos->x)--;
     }
     break;
   case 'c':
-    frag = mapgetf(map, (*pos_y), (*pos_x), h, w);
+    frag = mapgetf(map, (pos->y), (pos->x), size.y , size.x);
     break;
   }
   return frag;
@@ -128,10 +127,6 @@ int winmov(area_t *area, char dir, map_t *frag)
       return -1;
     }
     break;
-  case 's':
-    RTEST(mapsetf(area->map, frag, area->pos_y, area->pos_x), -1);
-    POS_INC(area->pos_y, MAP->h);
-    break;
   case 'a':
     POS_DEC(area->pos_x, MAP->w)
     if(mapsetf(area->map, frag, area->pos_y, area->pos_x) < 0)
@@ -140,12 +135,37 @@ int winmov(area_t *area, char dir, map_t *frag)
       return -1;
     }
     break;
+  case 's':
+    RTEST(mapsetf(area->map, frag, area->pos_y, area->pos_x), -1);
+    POS_INC(area->pos_y, MAP->h);
+    break;
   case 'd':
     RTEST(mapsetf(area->map, frag, area->pos_y, area->pos_x), -1);
     POS_INC(area->pos_x, MAP->w);
     break;
   case 'c':
     RTEST(mapsetf(area->map, frag, area->pos_y, area->pos_x), -1);
+    break;
+  }
+  winupdate(area);
+  return 0;
+}
+
+int winscroll(area_t *area, char dir)
+{
+  switch(dir)
+  {
+  case 'w':
+    POS_DEC(area->pos_y, MAP->h)
+    break;
+  case 'a':
+    POS_DEC(area->pos_x, MAP->w)
+    break;
+  case 's':
+    POS_INC(area->pos_y, MAP->h);
+    break;
+  case 'd':
+    POS_INC(area->pos_x, MAP->w);
     break;
   }
   winupdate(area);

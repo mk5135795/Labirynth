@@ -11,6 +11,11 @@
 #include "maze.h"
 
 typedef struct {
+  int y;
+  int x;
+} point_t;
+
+typedef struct {
     WINDOW *win;
     map_t *map;
     int pos_x;
@@ -21,8 +26,9 @@ void wininit();
 area_t *winget(int h, int w);
 area_t *winmaze(int h, int w);
 void winupdate(area_t *area);
-map_t *wingetfrag(char dir, map_t *map, int *pos_y, int *pos_x, int h, int w);
+map_t *wingetfrag(char dir, map_t *map, point_t *pos, point_t size);
 int  winmov(area_t *area, char dir, map_t *map);
+int  winscroll(area_t *area, char dir);
 void winplayer(area_t *area, int y, int x);
 void windel(area_t *area);
 

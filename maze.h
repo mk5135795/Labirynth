@@ -4,8 +4,10 @@
 #include "macro.h"
 #include "map.h"
 
-void genmaze(map_t *mp); //53
-void rwalk3(map_t *mp); //112
+//connectpaths
+//choosepath
+void genmaze(map_t *mp);
+void frame(map_t *map, int style);
 void randmap(map_t *map);
 void checkers(map_t *map);
 void grid(map_t *map);

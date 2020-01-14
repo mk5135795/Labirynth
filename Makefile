@@ -1,5 +1,5 @@
 CFLAGS=-std=c99 -Wall
-DEP=network.h graphic.h map.h maze.h
+DEP=network.h lab.h graphic.h map.h maze.h
 BIN=server client main
 OBJ=$(DEP:%.h=%.o)
 LIBS=-lncursesw

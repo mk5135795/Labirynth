@@ -2,8 +2,13 @@
 #define MAP_H
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <wchar.h>
 #include "macro.h"
+
+#define MAP_COPY  0x01
+#define MAP_SCALE 0x02
+#define MAP_FILL  0x04
 
 typedef struct {
     int h;
@@ -11,15 +16,13 @@ typedef struct {
     wchar_t **data;
 } map_t;
 
-map_t *mapcreat(int h, int w);          
-map_t *mapcpy(map_t *mpp);               
-map_t *mapcfill(int h, int w, wchar_t bg);
-void mapfill(map_t *map, wchar_t bg);
-map_t *mapcscale(map_t *map, int scale_y, int scale_x);
-int mapscale(map_t **map, int scale_y, int scale_x);
+map_t *mapget(int flags, ...);
+int mapctl(map_t **map, int flags, ...);
+void mapfree(map_t **mp);
+
 map_t *mapgetf(map_t *map, int y, int x, int h, int w); 
 int mapsetf(map_t *map, map_t *frag, int pos_y, int pos_x);
-void mapfree(map_t **mp);
+
 void mapprint(map_t *map);
 
 #endif /*MAP_H*/

@@ -3,9 +3,12 @@
 
 #include "macro.h"
 #include "graphic.h"
+#include "network.h"
 
-area_t *winmaze(int h, int w);
-int movpl(char dir, point_t *pos, map_t *map);
+Area *winmaze(int h, int w);
+//int clientmsg();
+//int servermsg();
+int movpl(char dir, Point *pos, Map *map);
 //add exit
 //queue handler
 //player

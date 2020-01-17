@@ -1,20 +1,20 @@
 #include "lab.h"
 
-area_t *winmaze(int h, int w)
+Area *winmaze(int h, int w)
 {
-  area_t *area = NULL;
+  Area *area = NULL;
   h = (h/3)*3;
   w = (w/3)*3;
-  RPTEST(area = winget(h, w), NULL);
+  RPTEST(area = win_create(h, w), NULL);
 
   genmaze(area->map);
-  RTEST(mapctl(&area->map, MAP_SCALE, 2, 2), NULL);
+  RTEST(map_op(&area->map, MAP_SCALE, 2, 2), NULL);
   frame(area->map, 1);
   
   return area;
 }
 
-int movpl(char dir, point_t *pos, map_t *map)
+int movpl(char dir, Point *pos, Map *map)
 {
   switch(dir)
   {

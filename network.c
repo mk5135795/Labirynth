@@ -1,52 +1,72 @@
 #include "network.h"
 
-net_t *getnett()
+const uint16_t kPort = 55555;
+
+const int kOther = 0;
+const int kArea = 1;
+
+Net *
+net_create()
 {
-  net_t *net;
-  RPTEST(net= malloc(sizeof(net_t)), NULL);
+  Net *net;
+  RPTEST(net= malloc(sizeof(Net)), NULL);
+  
   net->fd = NULL;
   net->addr = NULL;
   net->n = 0;
   net->size = 0;
   net->nfds = -1;
   net->q_head = NULL;
-  net->q_tail = NULL;
+
   FD_ZERO(&(net->set));
   return net;
 }
 
-void delqueue(msg_queue_t *queue)
+void 
+msg_delete(Msg **msg) 
 {
-  msg_queue_t *ptr = queue;
-  while(ptr != NULL) {
-    ptr = queue->next;
-    free(queue->msg->str);
-    free(queue->msg);
-    free(queue);
-    queue = ptr;
-  }
+  free((*msg)->str);
+  free((*msg));
+  msg = NULL;
 }
 
-void delnett(net_t **net)
+void 
+msg_queue_delete(MsgQueue **queue)
+{
+  MsgQueue **ptr = queue;
+  while(*ptr != NULL) {
+    ptr = &(*queue)->next;
+    msg_delete(&(*queue)->msg);
+    free(*queue);
+    *queue = *ptr;
+  }
+  queue = NULL;
+}
+
+void 
+net_delete(Net **net)
 {
   for(int i=(*net)->n-1; i>=0; i--) {
     if((*net)->addr[i] != NULL) {
-      closesfd(*net, i);
+      net_close_sfd(*net, i);
     }
   }
   
-  delqueue((*net)->q_head);
+  msg_queue_delete(&(*net)->q_head);
+  
   free((*net)->fd);
   for(int i=(*net)->n-1; i>=0; i--) {
     free((*net)->addr[i]);
   }
   free((*net)->addr);
-  
   free(*net);
+
   net = NULL;
 }
 
-int acceptsfd(net_t *net, int fd_i)
+int 
+net_accept_client(Net *net, 
+                  int  fd_i)
 {
   int sd;
   int addr_len;
@@ -58,10 +78,12 @@ int acceptsfd(net_t *net, int fd_i)
         (struct sockaddr*)(addr),
         (socklen_t*)(&addr_len)), -1);
 
-  return addfd(net, sd, addr);
+  return net_add_fd(net, sd, addr);
 }
 
-int closesfd(net_t *net, int fd_i)
+int 
+net_close_sfd(Net *net, 
+              int  fd_i)
 {
   RTEST(shutdown(net->fd[fd_i], 2), -1);
   RTEST(close(net->fd[fd_i]), -1);
@@ -74,39 +96,63 @@ int closesfd(net_t *net, int fd_i)
     net->fd[fd_i] = net->fd[net->n];
     net->addr[fd_i] = net->addr[net->n];
   }
-  //new nfds
+  //calc new nfds
   return 0;
 }
 
-int creatsfd(net_t *net, char *ip)
+int 
+_net_add_sfd(int *sd, 
+             struct sockaddr_in **addr)
+{
+  RTEST(*sd = socket(AF_INET, SOCK_STREAM, 0), -1);
+  RPTEST(*addr = malloc(sizeof(struct sockaddr_in)), -1);
+  
+  memset(*addr, 0, sizeof(struct sockaddr_in));
+  (*addr)->sin_family = AF_INET;
+  (*addr)->sin_port = htons(kPort);
+
+  return 0;
+}
+
+int 
+net_add_client(Net  *net, 
+            char *ip)
 {
   int sd;
   struct sockaddr_in *addr;
-  
-  RTEST(sd = socket(AF_INET, SOCK_STREAM, 0), -1);
-  RPTEST(addr = malloc(sizeof(struct sockaddr_in)), -1);
-  
-  memset(addr, 0, sizeof(struct sockaddr_in));
-  addr->sin_family = AF_INET;
-  addr->sin_port = htons(55555);
-  if(ip == NULL) {
-    addr->sin_addr.s_addr = htonl(INADDR_ANY);
-    RTEST(bind(sd, (struct sockaddr*)(addr),
-          sizeof(struct sockaddr_in)), -1);
-    RTEST(listen(sd, 10), -1);
-  } else {
-    addr->sin_addr.s_addr = inet_addr(ip);
-    RTEST(connect(sd, (struct sockaddr*)(addr),
-          sizeof(struct sockaddr_in)), -1);
-  }
+ 
+  RTEST(_net_add_sfd(&sd, &addr), -1);
 
-  return addfd(net, sd, addr);
+  addr->sin_addr.s_addr = inet_addr(ip);
+  RTEST(connect(sd, (struct sockaddr*)(addr),
+        sizeof(struct sockaddr_in)), -1);
+
+  return net_add_fd(net, sd, addr);
 }
 
-int addfd(net_t *net, int sd, struct sockaddr_in *addr)
+int 
+net_add_server(Net  *net)
+{
+  int sd;
+  struct sockaddr_in *addr;
+    
+  RTEST(_net_add_sfd(&sd, &addr), -1);
+  
+  addr->sin_addr.s_addr = htonl(INADDR_ANY);
+  RTEST(bind(sd, (struct sockaddr*)(addr),
+        sizeof(struct sockaddr_in)), -1);
+  RTEST(listen(sd, 10), -1);
+  
+  return net_add_fd(net, sd, addr);
+}
+
+int 
+net_add_fd(Net                *net, 
+           int                 sd, 
+           struct sockaddr_in *addr)
 {
   if(net->n == net->size) {
-    RTEST(resize(net, 1), -1);
+    RTEST(_net_resize(net, 1), -1);
   }
   net->fd[net->n] = sd;
   net->addr[net->n] = addr;
@@ -117,31 +163,47 @@ int addfd(net_t *net, int sd, struct sockaddr_in *addr)
   return net->n - 1;
 }
 
-int sendfmsg(int sfd, str_t *msg)
+int 
+net_send_msg(int  sfd, 
+             Msg *msg)
 {
   char *fmsg;
-  RPTEST(fmsg = malloc((msg->size+1)*sizeof(char)), -1);
+  RPTEST(fmsg = malloc((msg->size+2)*sizeof(char)), -1);
   fmsg[0] = msg->size;
-  memcpy(fmsg+1, msg->str, msg->size);
-  return send(sfd, fmsg, msg->size+1, 0);
+  fmsg[1] = msg->type;
+  memcpy(fmsg+2, msg->str, msg->size);
+  return send(sfd, fmsg, msg->size+2, 0);
 }
 
-int recmsg(int sfd, str_t **msg)
+int 
+net_recive_msg(int   sfd, 
+               Msg **msg)
 {
-  char chr;
-  recv(sfd, &chr, 1, 0);
-  if(((*msg) = malloc(sizeof(str_t))) == NULL 
-  || ((*msg)->str = malloc(chr*sizeof(char))) == NULL)
+  char chr[2];
+  
+  if(recv(sfd, &chr, 2, 0) < 2) {
+    return -1;
+  }
+
+  if(((*msg) = malloc(sizeof(Msg))) == NULL 
+  || ((*msg)->str = malloc(chr[0]*sizeof(char))) == NULL)
   {
     (*msg)->size = -1;
   } else {
-    (*msg)->size = recv(sfd, (*msg)->str, chr, 0);
-    //if msg->size != chr => error
+    (*msg)->size = recv(sfd, (*msg)->str, chr[0], 0);
+    if((*msg)->size != chr[0]) {
+      msg_delete(msg);
+      return -1;
+    }
   }
+  (*msg)->type = chr[1];
+  
   return (*msg)->size;
 }
 
-int selectfd(net_t *net, int usec)
+int 
+net_listen(Net *net, 
+           int  usec)
 {
   int s;
   for(int i=net->n-1; i>=0; i--) {
@@ -159,14 +221,14 @@ int selectfd(net_t *net, int usec)
   }
 
   if(FD_ISSET(net->fd[0], &(net->set))) {
-    acceptsfd(net, 0);
+    net_accept_client(net, 0);
   }
   for(int i=net->n-1; i>0; i--) {
     if(FD_ISSET(net->fd[i], &(net->set))) {
-      msg_queue_t *msg;
-      RPTEST(msg = malloc(sizeof(msg_queue_t)), -1);
-      RPTEST(msg->msg = malloc(sizeof(str_t)), -1);
-      recmsg(net->fd[i], &msg->msg);
+      MsgQueue *msg;
+      RPTEST(msg = malloc(sizeof(MsgQueue)), -1);
+      RPTEST(msg->msg = malloc(sizeof(Msg)), -1);
+      net_recive_msg(net->fd[i], &msg->msg);
 //    if(recmsg(net->fd[i], &(msg->msg)) == 0)
 //    {
 //      closesfd(net, i);
@@ -177,24 +239,18 @@ int selectfd(net_t *net, int usec)
         free(msg);
         continue;
       }
-      msg->fd_i = i;
-      msg->next = NULL;
-  
-      if(net->q_head == NULL) {
-        net->q_head = msg;
-        net->q_tail = msg;
-      }
-      else {
-        net->q_tail->next = msg;
-        net->q_tail = msg;
-      }
-//    wprintf(L"r%d: %s\n", i, net->q_tail->msg);
+      msg->fd_i = i; 
+      if(net->q_head == NULL) { msg->next = NULL;        } 
+      else                    { msg->next = net->q_head; }
+      net->q_head = msg;
     }
   }
   return s;
 }
 
-int resize(net_t *net, int expand)
+int 
+_net_resize(Net *net, 
+            int  expand)
 {
   int i = 0;
   int *tmp_fd;
@@ -218,10 +274,13 @@ int resize(net_t *net, int expand)
   return 0;
 }
 
-str_t *mapserialize(map_t *map) {
-  str_t *str;
+Msg *
+map_serialize(Map *map) 
+{
+  Msg *str;
 
-  RPTEST(str = malloc(sizeof(str_t)), NULL);
+  RPTEST(str = malloc(sizeof(Msg)), NULL);
+  str->type = kArea;
   str->size = 2*(map->w+1)*map->h;
   RPTEST(str->str = malloc((str->size+2)*sizeof(char)), NULL);
   str->str[0] = map->h;
@@ -229,21 +288,18 @@ str_t *mapserialize(map_t *map) {
   for(int i=str->size/2-1; i>=0; i--) {
     str->str[2*i+2] = map->data[0][i]%256;
     str->str[2*i+3] = map->data[0][i]/256;
-//  if(str->str[2*i+1] == '\0') str->str[2*i+1] = '-';
-//  else                        str->str[2*i+1] = '+';
-//  if(str->str[2*i  ] == '\0') str->str[2*i  ] = '-';
-//  else                        str->str[2*i  ] = '+';
   }
-//str->str[str->size-1] = '\0';
   return str;
 }
 
-map_t *mapdeserialize(str_t *str) {
-  map_t *map;
+Map *
+map_deserialize(Msg *str) 
+{
+  Map *map;
   int h = str->str[0];
   int w = str->str[1];
 
-  RPTEST(map = mapget(0, h, w-1), NULL);
+  RPTEST(map = map_create(0, h, w-1), NULL);
   for(int i=w*h-1; i>=0; i--) {
     map->data[0][i] = str->str[2*i+3]*256 + str->str[2*i+2];
   }

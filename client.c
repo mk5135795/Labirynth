@@ -1,35 +1,22 @@
-#define PORT 55555
-#define SAFE(v) \
-  if((v) < 0) \
-{ \
-  wprintf(L"error - line %d in  %s\n", __LINE__, __FILE__); \
-}
-
 #include <stdio.h>//printf
-#include <unistd.h>//sleep
 #include "network.h"
 #include "map.h"
 #include "maze.h"
 
 int main(int argc, char* argv[]) 
 {
-  net_t *net;
-  map_t *map;
-  str_t *msg;
+  Net *net;
+  Map *map;
+  Msg *msg;
 
-  ERPTEST(map = mapget(MAP_FILL, 4, 4, L'#'), -1);
+  ERPTEST(map = map_create(MAP_FILL, 4, 4, L'#'), -1);
   checkers(map);
-  mapprint(map);
-  ERPTEST(net = getnett(), -1);
+  map_print(map);
+  ERPTEST(net = net_create(), -1);
 
-  ERTEST(creatsfd(net, "0.0.0.0"), -1);
-  wprintf(L"accept\n");
-  sleep(1);
-//ERTEST(sendfmsg(net->fd[0], "test"), -1);
-  msg = mapserialize(map);
-//wprintf(L"m[%d]: [%s]\n", msg->size, msg->str);
-  ERTEST(sendfmsg(net->fd[0], msg), -1);
-  wprintf(L"end\n");
-  delnett(&net);
+  ERTEST(net_add_client(net, "0.0.0.0"), -1);
+  msg = map_serialize(map);
+  ERTEST(net_send_msg(net->fd[0], msg), -1);
+  net_delete(&net);
   return 0;
 } 

@@ -1,13 +1,19 @@
 #include "maze.h"
 
-struct tile_t {
+struct MazeTile 
+{
   int id;
-  struct tile_t *prev;
-  struct tile_t *next;
+  struct MazeTile *prev;
+  struct MazeTile *next;
 };
 
-void connectpaths(map_t *mp, struct tile_t **tiles, 
-    int y, int x, int sy, int sx)
+void 
+connectpaths(Map              *mp, 
+             struct MazeTile **tiles, 
+             int               y, 
+             int               x, 
+             int               sy, 
+             int               sx)
 {
   //return if already connected (no loops)
   if(tiles[y][x].id == tiles[y+sy][x+sx].id)
@@ -16,8 +22,8 @@ void connectpaths(map_t *mp, struct tile_t **tiles,
   }
 
   //ptr->id > ptr2->id
-  struct tile_t *ptr  = &tiles[y   ][x   ];
-  struct tile_t *ptr2 = &tiles[y+sy][x+sx];
+  struct MazeTile *ptr  = &tiles[y   ][x   ];
+  struct MazeTile *ptr2 = &tiles[y+sy][x+sx];
   //
   if(tiles[y][x].id < tiles[y+sy][x+sx].id)
   {
@@ -44,8 +50,13 @@ void connectpaths(map_t *mp, struct tile_t **tiles,
   mp->data[(y+sy)*3-(sy-1)][(x+sx)*3-(sx-1)] = L' ';
 }
 
-void choosepath(map_t *mp, struct tile_t **tiles,
-    int y, int x, int h, int w)
+void 
+choosepath(Map              *mp, 
+           struct MazeTile **tiles,
+           int               y, 
+           int               x, 
+           int               h, 
+           int               w)
 {
   switch(rand()%4) {
     case 0: if(y > 0  ) { connectpaths(mp, tiles, y, x, -1,  0); break; }
@@ -56,17 +67,18 @@ void choosepath(map_t *mp, struct tile_t **tiles,
   }
 }
 
-void genmaze(map_t *mp)
+void 
+genmaze(Map *mp)
 {
-  struct tile_t **tiles = NULL;
+  struct MazeTile **tiles = NULL;
   wchar_t empty = L' ';
   int h = mp->h/3;
   int w = mp->w/3;
 
-  PTEST(tiles = malloc((mp->h/3)*sizeof(struct tile_t*)));
+  PTEST(tiles = malloc((mp->h/3)*sizeof(struct MazeTile*)));
   for(int y=h-1; y>=0; y--)
   {
-    PTEST(tiles[y] = malloc((mp->w/3)*sizeof(struct tile_t)));
+    PTEST(tiles[y] = malloc((mp->w/3)*sizeof(struct MazeTile)));
     for(int x=w-1; x>=0; x--)
     {
       tiles[y][x].id = y*w + x + 1;
@@ -120,7 +132,8 @@ void genmaze(map_t *mp)
   free(tiles);
 }
 
-void randmap(map_t *map)
+void 
+randmap(Map *map)
 {
   int y, x;
   int n = 0.5*(map->h-1)*(map->w-1);
@@ -132,7 +145,8 @@ void randmap(map_t *map)
   }
 }
 
-void frame(map_t *map, int style)
+void 
+frame(Map *map, int style)
 {
   if(style < 0 || style >= 9)
   {
@@ -163,7 +177,8 @@ void frame(map_t *map, int style)
   map->data[map->h-1][map->w-1] = frame_el[3][style];
 }
 
-void checkers(map_t *map)
+void 
+checkers(Map *map)
 {
   for(int y=map->h-1; y>=0; y--)
   {
@@ -177,7 +192,8 @@ void checkers(map_t *map)
   }
 }
 
-void grid(map_t *map)
+void 
+grid(Map *map)
 {
   for(int y=map->h-1; y>=0; y--)
   {

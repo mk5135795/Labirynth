@@ -16,40 +16,47 @@
 
 #include <stdio.h>
 
-typedef struct {
-  char *str;
+typedef struct 
+{
+  int    type;
+  char  *str;
   size_t size;
-} str_t;
+} Msg;
 
-typedef struct msg_queue {
-  str_t *msg;
-  int fd_i;
-  struct msg_queue *next;
-} msg_queue_t;
+typedef struct MsgQueue 
+{
+  Msg             *msg;
+  int              fd_i;
+  struct MsgQueue *next;
+} MsgQueue;
 
-typedef struct {
-  int *fd;
+typedef struct 
+{
+  int                 *fd;
   struct sockaddr_in **addr;
-  int n;
-  int size;
-  int nfds;
-  fd_set set;
-  msg_queue_t *q_head;
-  msg_queue_t *q_tail;
-} net_t;
+  int                  n;
+  int                  size;
+  int                  nfds;
+  fd_set               set;
+  MsgQueue            *q_head;
+} Net;
 
-net_t *getnett();
-void delnett(net_t **net);
-int acceptsfd(net_t *net, int fd_i);
-int closesfd(net_t *net, int fd_i);
-int creatsfd(net_t *net, char *ip);
-int addfd(net_t *net, int sd, struct sockaddr_in *addr);
-int sendfmsg(int sfd, str_t *msg);
-int recmsg(int sfd, str_t **msg);
-int selectfd(net_t *net, int usec);
-int resize(net_t *net, int expand);
+Net *net_create();
+void msg_delete(Msg **msg);
+void msg_queue_delete(MsgQueue **queue);
+void net_delete(Net **net);
+int net_accept_client(Net *net, int fd_i);
+int net_close_sfd(Net *net, int fd_i);
+int _net_add_sfd(int *sd, struct sockaddr_in **addr);
+int net_add_client(Net *net, char *ip);
+int net_add_server(Net *net);
+int net_add_fd(Net *net, int sd, struct sockaddr_in *addr);
+int net_send_msg(int sfd, Msg *msg);
+int net_recive_msg(int sfd, Msg **msg);
+int net_listen(Net *net, int usec);
+int _net_resize(Net *net, int expand);
 
-str_t *mapserialize(map_t *map);
-map_t *mapdeserialize(str_t *str);
+Msg *map_serialize(Map *map);
+Map *map_deserialize(Msg *str);
 
 #endif /*NETWORK_H*/

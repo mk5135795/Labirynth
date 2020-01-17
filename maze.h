@@ -6,10 +6,10 @@
 
 //connectpaths
 //choosepath
-void genmaze(map_t *mp);
-void frame(map_t *map, int style);
-void randmap(map_t *map);
-void checkers(map_t *map);
-void grid(map_t *map);
+void genmaze(Map *mp);
+void frame(Map *map, int style);
+void randmap(Map *map);
+void checkers(Map *map);
+void grid(Map *map);
 
 #endif /*MAZE_H*/

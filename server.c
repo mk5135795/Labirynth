@@ -1,7 +1,7 @@
 #include <stdio.h>//printf
-#include "network.h"
-#include "map.h"
-#include "maze.h"
+#include "./include/network.h"
+#include "./include/map.h"
+#include "./include/maze.h"
 
 //msg_req + sem
 //msg_resp + sem

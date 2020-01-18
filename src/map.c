@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "map.h"
+#include "../include/map.h"
 
 Map *
 map_create(int flags, 

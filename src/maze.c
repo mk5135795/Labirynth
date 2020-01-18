@@ -1,4 +1,4 @@
-#include "maze.h"
+#include "../include/maze.h"
 
 struct MazeTile 
 {

@@ -1,4 +1,4 @@
-#include "lab.h"
+#include "../include/lab.h"
 
 Area *winmaze(int h, int w)
 {

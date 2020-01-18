@@ -1,6 +1,8 @@
 *
 !*.c
 !*.h
+!src/
+!include/
 !.gitignore
 !Makefile
 !Doxyfile

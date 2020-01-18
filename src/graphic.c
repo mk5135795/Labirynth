@@ -1,5 +1,5 @@
 /// \file graphic.c
-#include "graphic.h"
+#include "../include/graphic.h"
 
 #define POS area->pos
 #define MAP area->map

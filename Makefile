@@ -1,24 +1,34 @@
+CC=gcc
 CFLAGS=-std=c99 -Wall
-DEP=network.h lab.h graphic.h map.h maze.h
-BIN=server client main
-OBJ=$(DEP:%.h=%.o)
 LIBS=-lncursesw
+
+DEP_DIR=include
+OBJ_DIR=obj
+SRC_DIR=src
+
+BIN=server client main
+DEP=$(wildcard $(DEP_DIR)/*.h)
+OBJ:=$(patsubst $(DEP_DIR)/%.h, $(OBJ_DIR)/%.o, $(DEP)) 
+OBJ:=$(filter-out $(OBJ_DIR)/macro.o, $(OBJ))
 
 .PHONY: clean all
 
 all: $(BIN)
 
 clean:
-	rm -f *.o $(BIN)
+	rm -f $(OBJ_DIR)/*.o $(BIN)
 
 run_%: %
 	./$<
 
-$(BIN): %: %.o $(OBJ) macro.h
-	gcc -g -o $@ $^ $(CFLAGS) $(LIBS)
+$(BIN): %: $(OBJ_DIR)/%.o $(OBJ) $(DEP_DIR)/macro.h
+	$(CC) -g -o $@ $^ $(CFLAGS) $(LIBS)
 
-%.o: %.c $(DEP)
-	gcc -c -o $@ $< $(CFLAGS)
+$(OBJ): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEP)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(OBJ_DIR)/%.o: %.c $(DEP)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 #.SILENT:
 

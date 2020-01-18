@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "graphic.h"
-#include "lab.h"
+#include "./include/graphic.h"
+#include "./include/lab.h"
 
-#include "map.h"
+#include "./include/map.h"
 
 int main(int argc, char *argv[])
 {

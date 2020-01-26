@@ -1,4 +1,3 @@
-/// \file graphic.c
 #include "../include/graphic.h"
 
 #define POS area->pos
@@ -27,8 +26,15 @@ win_create(int h,
   RPTEST(area = malloc(sizeof(Area)), NULL);
 
   area->pos = (Point){0, 0};
-  RPTEST(area->map = map_create(MAP_FILL, h, w, L'█'), NULL);//█
-  RPTEST(area->win = newwin(h, w, 0, 0), NULL);
+  if((area->map = map_create(MAP_FILL, h, w, L'█')) == NULL) {
+    free(area);
+    return NULL;
+  }
+  if((area->win = newwin(h, w, 0, 0)) == NULL) {
+    map_delete(&area->map);
+    free(area);
+    return NULL;
+  }
   return area;
 }
 
@@ -38,15 +44,15 @@ win_update(Area *area)
   int ys;
   wchar_t wchr;
   
-  for(int y=0; y<MAP->h; y++) {
-    ys = (y + POS.y)%MAP->h;
+  for(int y=0; y<area->map->h; y++) {
+    ys = (y + area->pos.y)%area->map->h;
     
-    mvwaddwstr(area->win, y, 0, DATA[ys] + POS.x);
+    mvwaddwstr(area->win, y, 0, area->map->data[ys] + area->pos.x);
     
-    wchr = DATA[ys][POS.x];
-    DATA[ys][POS.x] = L'\0';
-    mvwaddwstr(area->win, y, MAP->w - POS.x, DATA[ys]);
-    DATA[ys][POS.x] = wchr;
+    wchr = area->map->data[ys][area->pos.x];
+    area->map->data[ys][area->pos.x] = L'\0';
+    mvwaddwstr(area->win, y, area->map->w - area->pos.x, area->map->data[ys]);
+    area->map->data[ys][area->pos.x] = wchr;
   }
   wrefresh(area->win);
 }
@@ -67,22 +73,34 @@ win_get_area(char   dir,
   switch(dir)
   {
   case 'w':
-    if((frag = map_get_area(map, --pos->y, pos->x, 1, size.x))  == NULL) {
+    if((frag = map_get_area(map, 
+                            --pos->y, pos->x, 
+                            1, size.x))  == NULL) 
+    {
       pos->y++;
     }
     break;
   case 'a':
-    if((frag = map_get_area(map, pos->y, --pos->x, size.y , 1))  == NULL) {
+    if((frag = map_get_area(map, 
+                            pos->y, --pos->x, 
+                            size.y , 1))  == NULL) 
+    {
       pos->x++;
     }
     break;
   case 's':
-    if((frag = map_get_area(map, size.y + pos->y, pos->x, 1, size.x)) != NULL) {
+    if((frag = map_get_area(map, 
+                            size.y + pos->y, pos->x, 
+                            1, size.x)) != NULL) 
+    {
       pos->y++;
     }
     break;
   case 'd':
-    if((frag = map_get_area(map, pos->y, size.x + pos->x, size.y , 1)) != NULL) {
+    if((frag = map_get_area(map, 
+                            pos->y, size.x + pos->x, 
+                            size.y , 1)) != NULL) 
+    {
       pos->x++;
     }
     break;
@@ -101,29 +119,29 @@ win_move(Area *area,
   switch(dir)
   {
   case 'w':
-    POS_DEC(POS.y, MAP->h)
-    if(map_set_area(MAP, frag, POS.y, POS.x) < 0) {
-      POS_INC(POS.y, MAP->h);
+    POS_DEC(area->pos.y, area->map->h)
+    if(map_set_area(area->map, frag, area->pos.y, area->pos.x) < 0) {
+      POS_INC(area->pos.y, area->map->h);
       return -1;
     }
     break;
   case 'a':
-    POS_DEC(POS.x, MAP->w)
-    if(map_set_area(MAP, frag, POS.y, POS.x) < 0) {
-      POS_INC(POS.x, MAP->w);
+    POS_DEC(area->pos.x, area->map->w)
+    if(map_set_area(area->map, frag, area->pos.y, area->pos.x) < 0) {
+      POS_INC(area->pos.x, area->map->w);
       return -1;
     }
     break;
   case 's':
-    RTEST(map_set_area(MAP, frag, POS.y, POS.x), -1);
-    POS_INC(POS.y, MAP->h);
+    RTEST(map_set_area(area->map, frag, area->pos.y, area->pos.x), -1);
+    POS_INC(area->pos.y, area->map->h);
     break;
   case 'd':
-    RTEST(map_set_area(MAP, frag, POS.y, POS.x), -1);
-    POS_INC(POS.x, MAP->w);
+    RTEST(map_set_area(area->map, frag, area->pos.y, area->pos.x), -1);
+    POS_INC(area->pos.x, area->map->w);
     break;
   case 'c':
-    RTEST(map_set_area(MAP, frag, POS.y, POS.x), -1);
+    RTEST(map_set_area(area->map, frag, area->pos.y, area->pos.x), -1);
     break;
   }
   win_update(area);
@@ -136,10 +154,10 @@ win_scroll(Area *area,
 {
   switch(dir)
   {
-  case 'w': POS_DEC(POS.y, MAP->h); break;
-  case 'a': POS_DEC(POS.x, MAP->w); break;
-  case 's': POS_INC(POS.y, MAP->h); break;
-  case 'd': POS_INC(POS.x, MAP->w); break;
+  case 'w': POS_DEC(area->pos.y, area->map->h); break;
+  case 'a': POS_DEC(area->pos.x, area->map->w); break;
+  case 's': POS_INC(area->pos.y, area->map->h); break;
+  case 'd': POS_INC(area->pos.x, area->map->w); break;
   }
   win_update(area);
 }
@@ -147,7 +165,11 @@ win_scroll(Area *area,
 void 
 win_delete(Area *area)
 {
-  map_delete(&(MAP));
+  if(area == NULL) {
+    return;
+  }
+
+  map_delete(&(area->map));
   delwin(area->win);
   endwin();
 }

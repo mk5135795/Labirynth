@@ -1,3 +1,8 @@
+/**
+ *  \file lab.h
+ *  \file lab.c
+ */
+
 #ifndef LAB_H
 #define LAB_H
 

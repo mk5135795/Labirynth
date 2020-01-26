@@ -1,7 +1,14 @@
+/**
+ *  \file network.h
+ *  \file network.c
+ */
+
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#define _XOPEN_SOURCE_EXTENDED 
+#ifndef _XOPEN_SOURCE_EXTENDED 
+  #define _XOPEN_SOURCE_EXTENDED 
+#endif
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,49 +20,46 @@
 #include <arpa/inet.h>
 #include "macro.h"
 #include "map.h"
+#include "msg.h"
 
 #include <stdio.h>
 
-typedef struct 
-{
-  int    type;
-  char  *str;
-  size_t size;
-} Msg;
+#define net_add_client(net, ip) _net_add_sfd(net, ip)
+#define net_add_server(net)     _net_add_sfd(net, NULL)
 
-typedef struct MsgQueue 
-{
-  Msg             *msg;
-  int              fd_i;
-  struct MsgQueue *next;
-} MsgQueue;
+enum { SRC_ERROR, SRC_SERVER, SRC_CLIENT, SRC_STDIN };
 
 typedef struct 
 {
-  int                 *fd;
-  struct sockaddr_in **addr;
-  int                  n;
-  int                  size;
-  int                  nfds;
-  fd_set               set;
-  MsgQueue            *q_head;
+  int      *fd;
+  int      *id;
+  void    **opt;
+  char     *type;
+
+  int       n;
+  int       nfds;
+  int       size;
+  int       next_id;
+
+  fd_set    set;
+  MsgQueue *q_head;
 } Net;
 
+//struct
 Net *net_create();
-void msg_delete(Msg **msg);
-void msg_queue_delete(MsgQueue **queue);
 void net_delete(Net **net);
+int net_find(Net *net, int id);
+int net_add_fd(Net *net, int fd, void *opt, char type);
+int _net_resize(Net *net, int expand);
+//struct-net
+int _net_add_sfd(Net *net, char *ip);
 int net_accept_client(Net *net, int fd_i);
 int net_close_sfd(Net *net, int fd_i);
-int _net_add_sfd(int *sd, struct sockaddr_in **addr);
-int net_add_client(Net *net, char *ip);
-int net_add_server(Net *net);
-int net_add_fd(Net *net, int sd, struct sockaddr_in *addr);
+//net
 int net_send_msg(int sfd, Msg *msg);
 int net_recive_msg(int sfd, Msg **msg);
 int net_listen(Net *net, int usec);
-int _net_resize(Net *net, int expand);
-
+//util
 Msg *map_serialize(Map *map);
 Map *map_deserialize(Msg *str);
 

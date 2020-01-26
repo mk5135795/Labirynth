@@ -26,8 +26,9 @@ map_create(int flags,
       sx = va_arg(args, int);
       map->h *= sy;
       map->w *= sx;
-    }/* scale */
-  } else {
+    }
+  } 
+  else {
     map->h = va_arg(args, int);
     map->w = va_arg(args, int);
     
@@ -38,22 +39,42 @@ map_create(int flags,
   va_end(args);
   
   //init
-  RPTEST(map->data = malloc(map->h*sizeof(wchar_t*)), NULL);
-  RPTEST(map->data[0] = malloc(map->h*(map->w+1)*sizeof(wchar_t)), NULL);
+  if((map->data = malloc(map->h*sizeof(wchar_t*))) == NULL) {
+    free(map);
+    return NULL;
+  }
+  if((map->data[0] = malloc(map->h*(map->w+1)*sizeof(wchar_t))) == NULL) {
+    free(map->data);
+    free(map);
+    return NULL;
+  }
   
   //fill
+//if sy, sx == 1
+//  if(old_map != NULL) {
+//    memcpy(, map->h*(map->w+1)*sizeof(wchar_t));
+//  }
+//  else {
+//    memset(map->data, bg, map->h*(map->w+1)*sizeof(wchar_t));
+//  }
+//  for()
+//else {
+//}
   for(int y=0; y<map->h; y += sy) {
     map->data[y] = map->data[0] + (y*(map->w+1));
     map->data[y][map->w] = L'\0';
+
     if(old_map != NULL) {
       for(int x=map->w-1; x>=0; x--) {
         map->data[y][x] = old_map->data[y/sy][x/sx];
       }
-    } else {
+    } 
+    else {
       for(int x=map->w-1; x>=0; x--) {
         map->data[y][x] = bg;
       }
     }
+
     for(int my=sy-1; my>0; my--) {
       map->data[y+my] = map->data[0] + ((y+my)*(map->w+1));
 //    strcpy(map->data[y+my], map->data[y]);
@@ -86,7 +107,8 @@ map_op(Map **map,
       va_end(args);
 
       RPTEST(nmap = map_create(MAP_FILL|MAP_SCALE, bg, (*map)->h*sy, (*map)->w*sx), -1);
-    } else {
+    } 
+    else {
       sy = va_arg(args, int);
       sx = va_arg(args, int);
       va_end(args);

@@ -1,27 +1,181 @@
 #include <stdio.h>//printf
 #include "./include/network.h"
+#include "./include/graphic.h"
+
 #include "./include/map.h"
 #include "./include/maze.h"
 
-//msg_req + sem
-//msg_resp + sem
+//q_recived -> q_to_send
+//MsgQueue mq_process(MsgQueue *queue);
+//send(q_to_send)
+//void mq_send(MsgQueue *queue);
+
+int msg_set_ack(Msg *msg)
+{
+  RTEST(msg_resize(msg, 4), -1);
+  strcpy(msg->str, "ACK");
+  msg->type = MSG_COMM;
+  msg->response = MSG_RESPONSE;
+  return 0;
+}
+
+void msg_handler(MsgQueue *qmsg)
+{
+    switch(qmsg->msg->type)
+    {
+    case MSG_ERROR:
+      break;
+    case MSG_AREA:
+      break;
+    case MSG_TEXT:
+      wprintf(L"%d>: %s\n", qmsg->id, qmsg->msg->str);
+      break;
+    case MSG_COMM:
+      break;
+    case MSG_OTHER:
+      break;
+    }
+    if(msg_set_ack(qmsg->msg) < 0) {
+      msg_delete(&qmsg->msg);
+    }
+}
+
+MsgQueue *msg_queue_handler(MsgQueue *request_queue, int (*req_msg_handler)(MsgQueue*))
+{
+  MsgQueue *response_head = NULL;
+  MsgQueue *response_tail = NULL;
+
+  while(request_queue != NULL) {
+    switch(request_queue->msg->response)
+    {
+    case MSG_REQUEST:
+      req_msg_handler(request_queue);
+
+      if(response_head == NULL) {
+        response_head = request_queue;
+        response_tail = request_queue;
+      }
+      else {
+        response_tail->next = request_queue;
+        response_tail = response_tail->next;
+      }
+      request_queue = request_queue->next;
+      response_tail->next = NULL;
+      break;
+    case MSG_RESPONSE:
+      //rm msg from q
+      msg_queue_remove(&request_queue);
+      break;
+    default:
+      msg_queue_remove(&request_queue);
+      break;
+    }
+  }
+  return response_head;
+}
+
+int msg_queue_response(Net *net, MsgQueue *response_queue)
+{
+  int fd_i = -1;
+  MsgQueue *qmsg;
+  while(response_queue != NULL)
+  { 
+    qmsg = response_queue;
+    response_queue = response_queue->next;
+    
+    ERTEST(fd_i = net_find(net, qmsg->id), -1);
+    ERTEST(net_send_msg(net->fd[fd_i], qmsg->msg), -1);
+    if(qmsg->msg->response == MSG_REQUEST) {
+      //add to q
+    }
+
+    msg_delete(&qmsg->msg);
+    free(qmsg);
+  }
+  return 0;
+}
 
 int main(int argc, char* argv[]) 
 {
   Net *net;
-  Map *map;
+//Point client_size = {24, 80};
+//Point server_size = {1*24, 1*78};
+//Point pos = {0, 0};
 
-  ERPTEST(map = map_create(MAP_FILL, 4, 4, L'#'), -1);
-  grid(map);
-  map_print(map);
+//Area *g_area;
+//
+//win_init();
+//ERPTEST(g_area = winmaze(server_size.y, server_size.x), -1);
+//
+//char dir;
+//Map *frag;
+//while((dir = wgetch(area->win)) != 'q')    
+//{
+//  if((frag = win_get_area(dir, g_area->map, &pos, client_size)) != NULL)
+//  {
+//    //send
+//  }
+//}
+//  
+//Map *map;
+//
+//ERPTEST(map = map_create(MAP_FILL, 4, 4, L'#'), -1);
+//grid(map);
+//map_print(map);
   
+  int end = 0;
+  int s = 0;
+  MsgQueue *qmsg;
+
   ERPTEST(net = net_create(), 0);
   ERTEST(net_add_server(net), -1);
-  ERTEST(net_listen(net, 0), -1);
-  ERTEST(net_listen(net, 0), -1);
   
-  Map *t = map_deserialize(net->q_head->msg);
-  map_print(t);
+  int n = 4;
+  int fd_i = -1;
+  Msg *msg;
+  ERPTEST(msg = msg_create(1, MSG_OTHER, n), -1);
+  while(end == 0)
+  {
+    if((s = net_listen(net, 0)) <= 0)
+    {
+      return -1;
+    }
+    else
+    {
+//    MsgQueue *tmp = msg_queue_handler(net->q_head, msg_handler);
+//    msg_queue_response(net, tmp);
+      while(net->q_head != NULL)
+      {
+        switch(net->q_head->msg->type)
+        {
+          case MSG_ERROR:
+            end = 1;
+            wprintf(L"s recv %s\n", net->q_head->msg->str);
+            msg->type = MSG_ERROR;
+            strcpy(msg->str, "END");
+            ERTEST(fd_i = net_find(net, net->q_head->id), -1);
+            ERTEST(net_send_msg(net->fd[fd_i], msg), -1);
+            wprintf(L"s send %s\n", msg->str);
+            break;
+          case MSG_OTHER:
+            wprintf(L"s recv %s\n", net->q_head->msg->str);
+            msg->type = MSG_OTHER;
+            strcpy(msg->str, "ACK");
+            ERTEST(fd_i = net_find(net, net->q_head->id), -1);
+            ERTEST(net_send_msg(net->fd[fd_i], msg), -1);
+            wprintf(L"s send %s\n", msg->str);
+            break;
+        }
+        qmsg = net->q_head->next;
+        msg_delete(&net->q_head->msg);
+        free(net->q_head);
+        net->q_head = qmsg;
+      }
+    }
+  }
+
+//Map *t = map_deserialize(net->q_head->msg);
+//map_print(t);
 
   ERTEST(net_close_sfd(net, 1), -1);
   net_delete(&net);

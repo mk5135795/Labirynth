@@ -7,9 +7,9 @@ Area *winmaze(int h, int w)
   w = (w/3)*3;
   RPTEST(area = win_create(h, w), NULL);
 
-  genmaze(area->map);
+  generate_maze(area->map);
   RTEST(map_op(&area->map, MAP_SCALE, 2, 2), NULL);
-  frame(area->map, 1);
+  add_frame(area->map, 1);
   
   return area;
 }

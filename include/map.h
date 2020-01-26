@@ -1,5 +1,6 @@
 /**
  *  \file map.h
+ *  \file map.c
  */
 
 #ifndef MAP_H

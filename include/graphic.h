@@ -1,11 +1,14 @@
 /**
  *  \file graphic.h
+ *  \file graphic.c
  */
 
 #ifndef GRAPHIC_H
 #define GRAPHIC_H
 
-#define _XOPEN_SOURCE_EXTENDED
+#ifndef _XOPEN_SOURCE_EXTENDED
+  #define _XOPEN_SOURCE_EXTENDED
+#endif
 
 #include <wchar.h>
 #include <locale.h>

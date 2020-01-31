@@ -58,6 +58,32 @@ msg_queue_add(MsgQueue **queue,
   return 0;
 }
 
+void
+msg_queue_move(MsgQueue **qmsg,
+               MsgQueue **queue)
+{
+  MsgQueue *tmp = (*qmsg);
+  (*qmsg) = (*qmsg)->next;
+  tmp->next = (*queue);
+  (*queue) = tmp;
+}
+
+MsgQueue *
+msg_queue_find(MsgQueue *queue,
+               int       src_id,
+               int       msg_id)
+{
+  while(queue != NULL) {
+    if(queue->id == src_id
+    && queue->msg->id == msg_id)
+    {
+      return queue;
+    }
+    queue = queue->next;
+  }
+  return NULL;
+}
+
 void 
 msg_queue_remove(MsgQueue **queue)
 {

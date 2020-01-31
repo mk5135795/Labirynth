@@ -142,6 +142,7 @@ _net_add_sfd(Net  *net,
   addr->sin_family = AF_INET;
   addr->sin_port = htons(kPort);
 
+  //server
   if(ip == NULL) {
     addr->sin_addr.s_addr = htonl(INADDR_ANY);
     if(bind(sd, (struct sockaddr*)(addr),
@@ -151,17 +152,17 @@ _net_add_sfd(Net  *net,
       free(addr);
       return -1;
     }
-  }
-  else {
-    addr->sin_addr.s_addr = inet_addr(ip);
-    if((connect(sd, (struct sockaddr*)(addr),
-            sizeof(struct sockaddr_in))) <0)
-    {
-      free(addr);
-      return -1;
-    }
+    return net_add_fd(net, sd, addr, SRC_SERVER);
   }
 
+  //client
+  addr->sin_addr.s_addr = inet_addr(ip);
+  if((connect(sd, (struct sockaddr*)(addr),
+          sizeof(struct sockaddr_in))) <0)
+  {
+    free(addr);
+    return -1;
+  }
   return net_add_fd(net, sd, addr, SRC_CLIENT);
 }
 
@@ -238,13 +239,12 @@ net_recive_msg(int   sfd,
                Msg **msg)
 {
   char chr[4];
-  
-  if(recv(sfd, &chr, 4, 0) < 4) {
+  int t; 
+  if((t=recv(sfd, &chr, 4, 0)) < 4) {
     return -1;
   }
   RPTEST((*msg) = msg_create(chr[2], chr[3], chr[0]), -1);
   (*msg)->response = chr[1];
-    
   return recv(sfd, (*msg)->str, chr[0], 0);
 }
 
@@ -295,6 +295,8 @@ net_listen(Net *net,
           msg->str[0] = chr;
           
           msg_queue_add(&net->q_head, msg, net->id[fd_i]);
+          break;
+      default:
           break;
       }
     }

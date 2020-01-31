@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
   int msg_n = 2;
   Msg *msg;
-  ERPTEST(msg = msg_create(1, MSG_TEXT, msg_n), -1);
+  ERPTEST(msg = msg_create(100, MSG_TEXT, msg_n), -1);
   msg->str[1] = '\0';
   while(end == 0)
   {

@@ -1,6 +1,7 @@
 #include <stdio.h>//printf
 #include "./include/network.h"
 #include "./include/graphic.h"
+#include "./include/msg_handler.h"
 
 #include "./include/map.h"
 #include "./include/maze.h"
@@ -19,7 +20,7 @@ int msg_set_ack(Msg *msg)
   return 0;
 }
 
-void msg_handler(MsgQueue *qmsg)
+int msg_handler(MsgQueue *qmsg)
 {
     switch(qmsg->msg->type)
     {
@@ -31,85 +32,23 @@ void msg_handler(MsgQueue *qmsg)
       wprintf(L"%d>: %s\n", qmsg->id, qmsg->msg->str);
       break;
     case MSG_COMM:
+      wprintf(L"%d comm %s\n", qmsg->id, qmsg->msg->str);
+      qmsg->id = SRC_CLIENT;
+      RTEST(msg_resize(qmsg->msg, 5), -1);
+      strcpy(qmsg->msg->str, "ECHO");
+      qmsg->msg->type = MSG_TEXT;
+      qmsg->msg->response = MSG_RESPONSE;
+      return 2;
       break;
     case MSG_OTHER:
       break;
+    default:
+      return 0;
     }
     if(msg_set_ack(qmsg->msg) < 0) {
       msg_delete(&qmsg->msg);
     }
-}
-
-MsgQueue *msg_queue_handler(MsgQueue  **request_queue, 
-                            MsgQueue  *await, 
-                            void     (*req_msg_handler)(MsgQueue*))
-{
-  MsgQueue *response_head = NULL;
-  MsgQueue *response_tail = NULL;
-  MsgQueue *tmp;
-
-  while(*request_queue != NULL) {
-    switch((*request_queue)->msg->response)
-    {
-    case MSG_REQUEST:
-      //handle request
-      req_msg_handler(*request_queue);
-
-      //move to response queue
-      if(response_head == NULL) {
-        response_head = *request_queue;
-        response_tail = *request_queue;
-      }
-      else {
-        response_tail->next = *request_queue;
-        response_tail = response_tail->next;
-      }
-      *request_queue = (*request_queue)->next;
-      response_tail->next = NULL;
-      break;
-
-    case MSG_RESPONSE:
-      tmp = msg_queue_find(await, (*request_queue)->id, (*request_queue)->msg->id);
-      if(tmp != NULL) {
-        //handle response
-        //fun(resp, org_req);
-        msg_queue_remove(&tmp);
-        msg_queue_remove(request_queue);
-        break;
-      }
-
-    default:
-      //error
-      msg_queue_remove(request_queue);
-      break;
-    }
-  }
-  return response_head;
-}
-
-int msg_queue_response(Net      *net, 
-                       MsgQueue **response_queue, 
-                       MsgQueue **await)
-{
-  int fd_i = -1;
-  MsgQueue *qmsg;
-  
-  while(*response_queue != NULL)
-  { 
-    qmsg = *response_queue;
-    *response_queue = (*response_queue)->next;
-    
-    ERTEST(fd_i = net_find(net, qmsg->id), -1);
-    ERTEST(net_send_msg(net->fd[fd_i], qmsg->msg), -1);
-    if(qmsg->msg->response == MSG_REQUEST) {
-      msg_queue_move(&qmsg, await);
-    }
-    else {
-      msg_delete(&qmsg->msg);
-      free(qmsg);
-    }
-  }
-  return 0;
+    return 1;
 }
 
 int main(int argc, char* argv[]) 
@@ -161,7 +100,7 @@ int main(int argc, char* argv[])
     else
     {
       if(1) {
-      MsgQueue *tmp = msg_queue_handler(&net->q_head, await, msg_handler);
+      MsgQueue *tmp = msg_queue_handler(net, &net->q_head, await, msg_handler);
       msg_queue_response(net, &tmp, &await);
       }
       else {

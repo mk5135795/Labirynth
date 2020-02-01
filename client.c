@@ -56,20 +56,30 @@ int main(int argc, char* argv[])
         {
           case MSG_ERROR:
             end = 1;
-            wprintf(L"c recv %s\n", net->q_head->msg->str);
+            wprintf(L"recv:%s\n", net->q_head->msg->str);
             break;
           case MSG_TEXT:
-            msg->str[0] = net->q_head->msg->str[0];
-            wprintf(L"c stdin %c\n", msg->str[0]);
 
-            if(msg->str[0] == 'q') { msg->type = MSG_ERROR;
-            } else {                 msg->type = MSG_TEXT ;}
-            ERTEST(net_send_msg(net->fd[0], msg), -1);
+            if(net->type[net->q_head->id] == SRC_STDIN) {
+              msg->str[0] = net->q_head->msg->str[0];
+              wprintf(L"stdin:%c\n", msg->str[0]);
 
-            wprintf(L"c send %s\n", msg->str);
+              if(msg->str[0] == 'q')      { msg->type = MSG_ERROR;}
+              else if(msg->str[0] == 'e') { msg->type = MSG_COMM; }
+              else                        { msg->type = MSG_TEXT; }
+              ERTEST(net_send_msg(net->fd[0], msg), -1);
+
+              wprintf(L"send:%s\n", msg->str);
+            }
+            else {
+              wprintf(L"recv:%s\n", net->q_head->msg->str);
+            }
             break;
           case MSG_OTHER:
-            wprintf(L"c recv %s\n", net->q_head->msg->str);
+            wprintf(L"recv:%s\n", net->q_head->msg->str);
+            break;
+          case MSG_COMM:
+            wprintf(L"recv:%s\n", net->q_head->msg->str);
             break;
         }
         qmsg = net->q_head->next;

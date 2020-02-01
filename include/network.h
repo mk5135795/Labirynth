@@ -1,6 +1,12 @@
 /**
  *  \file network.h
  *  \file network.c
+ *
+ *  \todo
+ *  mv struct to net_struct.h
+ *  mv struct-net & net to net_comm.h
+ *  mv utils to net_utils.h
+ *  add wrapers
  */
 
 #ifndef NETWORK_H

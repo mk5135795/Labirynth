@@ -7,12 +7,13 @@
 #define MSG_H
 
 #include <stdlib.h>
+#include <string.h>
 #include "macro.h"
 
 #include <stdio.h>
 
 enum response { MSG_IGNORE, MSG_REQUEST, MSG_RESPONSE };
-enum type { MSG_ERROR , MSG_AREA, MSG_TEXT, MSG_COMM, MSG_OTHER };
+enum type { MSG_ERROR, MSG_AREA, MSG_TEXT, MSG_COMM, MSG_OTHER };
 
 typedef struct 
 {
@@ -31,9 +32,11 @@ typedef struct MsgQueue
 } MsgQueue;
 
 Msg *msg_create(char id, char type, size_t size);
+Msg *msg_copy(Msg *msg);
 //set_text()
 int msg_resize(Msg *msg, size_t size);
 void msg_delete(Msg **msg);
+
 int msg_queue_add(MsgQueue **queue, Msg *msg, int fd_i);
 void msg_queue_move(MsgQueue **qmsg, MsgQueue **queue);
 MsgQueue *msg_queue_find(MsgQueue *queue, int src_id, int msg_id);

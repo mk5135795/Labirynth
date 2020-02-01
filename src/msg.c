@@ -21,6 +21,22 @@ msg_create(char   id,
   return msg;
 }
 
+Msg *
+msg_copy(Msg *msg)
+{
+  Msg *nmsg;
+  RPTEST(nmsg = malloc(sizeof(Msg)), NULL);
+  memcpy(nmsg, msg, sizeof(Msg));
+  if((nmsg->str = malloc(msg->size*sizeof(char))) == NULL)
+  {
+    free(nmsg);
+    nmsg = NULL;
+  }
+  strcpy(nmsg->str, msg->str);
+
+  return nmsg;
+}
+
 int
 msg_resize(Msg   *msg,
            size_t size)
@@ -30,6 +46,7 @@ msg_resize(Msg   *msg,
   
   free(msg->str);
   msg->str = tmp;
+  msg->size = size;
 
   return 0;
 }
